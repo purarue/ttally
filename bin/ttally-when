@@ -401,7 +401,7 @@ def _color(s: str, is_expired: bool, is_silenced: bool) -> str:
     type=click.Choice(get_args(DisplayFormat)),
     default="table",
 )
-# https://github.com/seanbreckenridge/reminder-sink
+# https://github.com/purarue/reminder-sink
 @click.option(
     "-s/-h",
     "--show-silenced/--hide-silenced",

@@ -65,7 +65,7 @@ class Extension:
         default_extension: "Format" = "yaml",
         merged_extension: "Format" = "json",
         # help info
-        URL: str = "https://github.com/seanbreckenridge/ttally",
+        URL: str = "https://github.com/purarue/ttally",
     ) -> None:
         # config
         self.name = name
@@ -224,7 +224,7 @@ class Extension:
     def versioned_timestamp(cls) -> str:
         timestamp = datetime.strftime(datetime.now(), "%Y-%m")
         # I set a ON_OS variable using on_machine:
-        # https://github.com/seanbreckenridge/on_machine
+        # https://github.com/purarue/on_machine
         if "ON_OS" in os.environ:
             computer = os.environ["ON_OS"]
         else:

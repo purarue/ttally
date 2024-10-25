@@ -23,8 +23,8 @@ havecmd() {
 havecmd jq
 havecmd fzf
 havecmd awk
-havecmd chomp 'Install from https://github.com/seanbreckenridge/chomp'
-havecmd fzfcache 'Install from https://github.com/seanbreckenridge/fzfcache'
+havecmd chomp 'Install from https://github.com/purarue/chomp'
+havecmd fzfcache 'Install from https://github.com/purarue/fzfcache'
 
 add_to_food() {
 	local JSON_DATA TEMPFILE

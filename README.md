@@ -21,7 +21,7 @@ class Food(NamedTuple):
     @staticmethod
     def attr_validators() -> dict:
         # https://sean.fish/d/ttally_types.py?redirect
-        from my.config.seanb.ttally_types import prompt_float_default  # type: ignore
+        from my.config.pura.ttally_types import prompt_float_default  # type: ignore
 
         # if I don't supply a quantity, default to 1
         return {"quantity": lambda: prompt_float_default("quantity")}
@@ -38,7 +38,7 @@ class Event(NamedTuple):
 
     @staticmethod
     def attr_validators() -> dict:
-        from my.config.seanb.ttally_types import edit_in_vim  # type: ignore
+        from my.config.pura.ttally_types import edit_in_vim  # type: ignore
 
         return {"comments": edit_in_vim}
 
@@ -47,7 +47,7 @@ import os
 from enum import Enum
 
 # dynamically create an enum using each line of the file as an option
-with open(os.path.join(os.environ["HPIDATA"], "self_types.txt")) as f:
+with open(os.path.join(os.environ["HPIDATA"], ".self_types.txt")) as f:
     SelfT = Enum("SelfT", [s.rstrip().upper() for s in f])
 
 
@@ -75,7 +75,7 @@ alias weight-recent='python3 -m ttally recent weight'
 
 Whenever I run any of those aliases, it inspects the model in the config file, and on-the-fly creates and runs an interactive interface like this:
 
-<img src="https://raw.githubusercontent.com/seanbreckenridge/autotui/master/.assets/builtin_demo.gif">
+<img src="https://raw.githubusercontent.com/purarue/autotui/master/.assets/builtin_demo.gif">
 
 ... which saves what I enter to a file:
 
@@ -86,7 +86,7 @@ Whenever I run any of those aliases, it inspects the model in the config file, a
 
 ## ttally
 
-`ttally` is an interactive module using [`autotui`](https://github.com/seanbreckenridge/autotui) to save things I do often to YAML/JSON
+`ttally` is an interactive module using [`autotui`](https://github.com/purarue/autotui) to save things I do often to YAML/JSON
 
 Currently, I use this to store info like whenever I eat something/drink water/my current weight/thoughts on concerts
 
@@ -116,18 +116,18 @@ The `-recent` aliases can accept `all` to print all items, or a duration like `1
 - can be loaded into python as typed objects
 - minimal boilerplate to add a new model
 - can be synced across multiple machines without conflicts
-- allow completely custom types or prompts - see [autotui docs](https://github.com/seanbreckenridge/autotui#custom-types), [my custom prompts](https://sean.fish/d/ttally_types.py?redirect)
+- allow completely custom types or prompts - see [autotui docs](https://github.com/purarue/autotui#custom-types), [my custom prompts](https://sean.fish/d/ttally_types.py?redirect)
 
 This intentionally uses YAML and doesn't store the info into a single "merged" database. That way:
 
 - you can just open the YAML file and quickly change/edit some item, no need to re-invent a CRUD interface (though `ttally edit-recent` does exist)
 - files can be synced across machines and to my phone using [syncthing](https://syncthing.net/) without file conflicts
-- prevents issues with trying to merge multiple databases from different machines together ([I've tried](https://github.com/seanbreckenridge/calories-scripts/blob/master/calmerge))
+- prevents issues with trying to merge multiple databases from different machines together ([I've tried](https://github.com/purarue/calories-scripts/blob/master/calmerge))
 
 The YAML files are versioned with the date/OS/platform, so I'm able to add items on my linux, mac, or android (using [`termux`](https://termux.com/)) and sync them across all my devices using [`SyncThing`](https://syncthing.net/). Each device creates its own file it adds items to, like:
 
 ```
-food-darwin-seans-mbp.localdomain-2021-03.yaml
+food-darwin-mbp.localdomain-2021-03.yaml
 food-linux-bastion-2021-03.yaml
 food-linux-localhost-2021-04.yaml
 ```
@@ -149,7 +149,7 @@ Food(when=datetime.datetime(2020, 9, 27, 6, 53, 44, tzinfo=datetime.timezone.utc
 
 The `from-json` command can be used to send this JSON which matches a model, i.e. providing a non-interactive interface to add items, in case I want to [call this from a script](bin/cz)
 
-`hpi query` from [`HPI`](https://github.com/seanbreckenridge/HPI) can be used with the `ttally.__main__` module, like:
+`hpi query` from [`HPI`](https://github.com/purarue/HPI) can be used with the `ttally.__main__` module, like:
 
 ```bash
 # how many calories in the last day
@@ -188,6 +188,7 @@ Options:
 
 Commands:
   datafile      print the datafile location
+  drop-last     drop the last n items
   edit          edit the datafile
   edit-recent   fuzzy select/edit recent items
   export        export all data from a model
@@ -270,4 +271,4 @@ The entire `ttally` library/CLI can also be subclassed/extended for custom usage
 
 [`cz`](bin/cz) lets me fuzzy select something I've eaten in the past using [`fzf`](https://github.com/junegunn/fzf), like:
 
-![](https://raw.githubusercontent.com/seanbreckenridge/calories-fzf/master/demo.gif)
+![](https://raw.githubusercontent.com/purarue/calories-fzf/master/demo.gif)
