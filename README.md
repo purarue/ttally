@@ -20,7 +20,7 @@ class Food(NamedTuple):
     # specify a special way to prompt for quantity
     @staticmethod
     def attr_validators() -> dict:
-        # https://sean.fish/d/ttally_types.py?redirect
+        # https://purarue.xyz/d/ttally_types.py?redirect
         from my.config.pura.ttally_types import prompt_float_default  # type: ignore
 
         # if I don't supply a quantity, default to 1
@@ -90,7 +90,7 @@ Whenever I run any of those aliases, it inspects the model in the config file, a
 
 Currently, I use this to store info like whenever I eat something/drink water/my current weight/thoughts on concerts
 
-Given a `NamedTuple` defined in [`~/.config/ttally.py`](https://sean.fish/d/ttally.py?redirect), this creates interactive interfaces which validates my input and saves it to a file
+Given a `NamedTuple` defined in [`~/.config/ttally.py`](https://purarue.xyz/d/ttally.py?redirect), this creates interactive interfaces which validates my input and saves it to a file
 
 The `{tuple}-now` aliases set the any `datetime` values for the prompted tuple to now
 
@@ -116,7 +116,7 @@ The `-recent` aliases can accept `all` to print all items, or a duration like `1
 - can be loaded into python as typed objects
 - minimal boilerplate to add a new model
 - can be synced across multiple machines without conflicts
-- allow completely custom types or prompts - see [autotui docs](https://github.com/purarue/autotui#custom-types), [my custom prompts](https://sean.fish/d/ttally_types.py?redirect)
+- allow completely custom types or prompts - see [autotui docs](https://github.com/purarue/autotui#custom-types), [my custom prompts](https://purarue.xyz/d/ttally_types.py?redirect)
 
 This intentionally uses YAML and doesn't store the info into a single "merged" database. That way:
 
@@ -207,7 +207,7 @@ Commands:
 You need to setup a `~/.config/ttally.py` file. You can use the block above as a starting point, or with mine:
 
 ```bash
-curl -s 'https://sean.fish/d/ttally.py' > ~/.config/ttally.py
+curl -s 'https://purarue.xyz/d/ttally.py' > ~/.config/ttally.py
 ```
 
 To setup aliases; You can do it each time you launch you terminal like:
@@ -265,7 +265,7 @@ Default cache directory can be overwritten with the `TTALLY_CACHE_DIR` environme
 
 ### Subclassing/Extension
 
-The entire `ttally` library/CLI can also be subclassed/extended for custom usage, by using `ttally.core.Extension` class and `wrap_cli` to add additional [click](https://click.palletsprojects.com/en/8.1.x) commands. For an example, see [flipflop.py](https://sean.fish/d/flipflop.py?redirect)
+The entire `ttally` library/CLI can also be subclassed/extended for custom usage, by using `ttally.core.Extension` class and `wrap_cli` to add additional [click](https://click.palletsprojects.com/en/8.1.x) commands. For an example, see [flipflop.py](https://purarue.xyz/d/flipflop.py?redirect)
 
 ### Shell Scripts
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# uses https://sean.fish/c/shellscripts/picker?redirect to let me add
+# uses https://purarue.xyz/c/shellscripts/picker?redirect to let me add
 # something to self by using rofi/system launcher
 
 set -euo pipefail

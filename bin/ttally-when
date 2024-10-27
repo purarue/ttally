@@ -322,7 +322,7 @@ def query(eval_str: Sequence[str], query: Sequence[str]) -> None:
     which is applied to the list of items from the model
 
     These use my models for examples:
-        https://sean.fish/d/ttally.py?redirect
+        https://purarue.xyz/d/ttally.py?redirect
 
     The name of the variable in the lambda determines the ttally model type
 
