@@ -53,7 +53,12 @@ main() {
 	readarray -d "|" -t CHOSEN <<<"${SELECTED/$'\n'/}" || abort 'Error splitting chosen line into parts\n'
 
 	# add item to food
-	[[ -z "${PROMPT_DATETIME}" ]] && WHEN="$(date +'%s')"
+	if [[ -z "${PROMPT_DATETIME}" ]]; then
+		WHEN="$(date +'%s')"
+	elif [[ -n "${CZ_DATE}" ]]; then
+		WHEN="${CZ_DATE}"
+	fi
+
 	add_to_food "${CHOSEN[0]}" "${CHOSEN[1]}" "${CHOSEN[2]}" "${WHEN:-}" || return $?
 
 	# print recent items so I can review

@@ -8,6 +8,7 @@ next do a task, based on the last time I did it and a frequency
 import json
 import time
 from typing import (
+    cast,
     List,
     get_args,
     Any,
@@ -49,8 +50,7 @@ def _extract_dt_attr(item: Type[NamedTuple]) -> str:
 
 def when(item: NamedTuple) -> datetime:
     dt_attr = _extract_dt_attr(type(item))
-    dt_val = getattr(item, dt_attr)
-    assert isinstance(dt_val, datetime)
+    dt_val = cast(datetime, getattr(item, dt_attr))
     return dt_val.astimezone()
 
 
@@ -372,6 +372,7 @@ def query(eval_str: Sequence[str], query: Sequence[str]) -> None:
 
 
 DisplayFormat = Literal["name", "table", "json"]
+
 
 def _color(s: str, is_expired: bool, is_silenced: bool) -> str:
     if is_expired:
