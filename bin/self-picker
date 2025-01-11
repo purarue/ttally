@@ -16,3 +16,4 @@ jq --null-input --arg TIMESTAMP "$(date +'%s')" --arg PICKED "$PICKED" \
 	'[{when: $TIMESTAMP, what: $PICKED}]' >"$TEMPFILE"
 python3 -m ttally from-json self --file "$TEMPFILE" || exit $?
 command rm -v "$TEMPFILE"
+hash -r ttally-sync && with-secrets ttally-sync
