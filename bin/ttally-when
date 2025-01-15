@@ -82,6 +82,7 @@ def query(eval_str: Sequence[str], query: Sequence[str]) -> None:
     """
     if eval_str:
         for s in eval_str:
+            # hmm, should this be eval instead?
             exec(s)
 
     parsed_queries = [when.Query.from_str(q, ext=ext) for q in query]

@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+
+import os
+import sys
+import json
+import fnmatch
+import io
+import logging
+from pathlib import Path
+from datetime import datetime, timezone
+from dataclasses import dataclass
+from contextlib import contextmanager
+from typing import Generator, Sequence, TextIO, Any, Literal, get_args, assert_never
+
+import click
+from ttally import when
+from reminder_sink.__main__ import SilentFile
+
+ext = when.CachedExtension()
+
+FORMAT = "%(asctime)s %(levelname)s - %(message)s"
+logging.basicConfig(level=logging.INFO, format=FORMAT)
+
+
+@contextmanager
+def capture_stdout(buf: TextIO) -> Generator[None, None, None]:
+    actual_stdout = sys.stdout
+    try:
+        sys.stdout = buf
+        yield
+    finally:
+        sys.stdout = actual_stdout
+
+
+@click.group()
+def main() -> None:
+    pass
+
+
+@dataclass
+class QueryOutput:
+    name: str
+    expired: bool
+    silenced: bool
+    last_at: datetime
+    next_at: datetime
+
+    @classmethod
+    def from_dict(cls, d: Any, /, *, silenced: list[str]) -> "QueryOutput":
+        assert isinstance(d, dict)
+        return cls(
+            name=d["name"],
+            last_at=datetime.fromtimestamp(d["epoch"], tz=timezone.utc),
+            next_at=datetime.fromtimestamp(d["next_epoch"], tz=timezone.utc),
+            expired=d["expired"],
+            silenced=SilentFile.is_silenced(d["name"], silenced=silenced),
+        )
+
+    @classmethod
+    def from_str(cls, s: Any, /, *, silenced: list[str]) -> "QueryOutput":
+        return cls.from_dict(json.loads(s), silenced=silenced)
+
+
+REMINDER_SINK_FILE_NAME: str = "reminder-sink-silent.txt"
+
+
+def _reminder_sink_file() -> Path:
+    if file := os.environ.get("REMINDER_SINK_SILENT_FILE"):
+        return Path(file)
+    if "HPIDATA" in os.environ:
+        return Path(os.environ["HPIDATA"]) / REMINDER_SINK_FILE_NAME
+    else:
+        raise FileNotFoundError()
+
+
+def _reminder_sink_silent_contents() -> list[str]:
+    try:
+        return list(SilentFile(_reminder_sink_file()).load())
+    except FileNotFoundError:
+        return []
+
+
+Action = Literal["print", "notify"]
+
+
+def _parse_filter(val: str) -> list[str]:
+    if not val:
+        return []
+    return [s for s in val.strip().split("|") if s.strip()]
+
+
+@main.command()
+@click.option("-a", "--action", default="print", type=click.Choice(get_args(Action)))
+@click.option(
+    "--expired/--all",
+    is_flag=True,
+    default=None,
+    help="Only print items which have expired",
+)
+@click.option(
+    "--filter",
+    "_filter",
+    required=False,
+    type=click.UNPROCESSED,
+    callback=lambda ctx, arg, value: _parse_filter(value),
+)
+@click.argument("QUERY", type=str, nargs=-1)
+def run(
+    action: Action, expired: bool | None, _filter: str, query: Sequence[str]
+) -> None:
+    if "-" in query:
+        query = sys.stdin.readlines()
+
+    # HACK:only include items which have 'with_timedelta',
+    # so that we know that next and next_epoch are always present
+    # we'd only want to warn for these items anyways
+    parsed_queries = [
+        when.Query.from_str(q, ext=ext) for q in query if "with_timedelta" in q
+    ]
+    if not parsed_queries:
+        click.echo("No queries provided", err=True)
+        return
+    buf = io.StringIO()
+    with capture_stdout(buf):
+        for q in parsed_queries:
+            q.run(ext=ext)
+
+    silenced: list[str] = _reminder_sink_silent_contents()
+
+    data: list[QueryOutput] = [
+        QueryOutput.from_str(s, silenced=silenced)
+        for s in buf.getvalue().splitlines()
+        if s.strip()
+    ]
+
+    if _filter:
+        data = list(
+            filter(
+                lambda d: any(
+                    fnmatch.fnmatch(d.name, filter_query) for filter_query in _filter
+                ),
+                data,
+            )
+        )
+
+    if expired or (expired is None and action == "notify"):
+        data = list(filter(lambda d: d.silenced is False and d.expired is True, data))
+
+    match action:
+        case "print":
+            for d in data:
+                click.echo(d)
+        case "notify":
+            if topic := os.environ.get("TTALLY_NTFY_TOPIC"):
+                import requests
+
+                url = f"https://ntfy.sh/{topic}"
+                body = "\n".join(
+                    [f"{d.name} | {when.dt_humanize(d.next_at)}" for d in data]
+                )
+                try:
+                    req = requests.post(
+                        url, data=body, headers={"Content-Type": "text/plain"}
+                    )
+                    req.raise_for_status()
+                except requests.exceptions.RequestException as e:
+                    logging.exception(str(e), exc_info=True)
+                    logging.error("Could not send notification...")
+            else:
+                logging.error("No TTALLY_NTFY_TOPIC environment variable set")
+                raise SystemExit(1)
+        case val:
+            assert_never(val)
+
+
+if __name__ == "__main__":
+    main(prog_name="ttally-send-ntfy")
