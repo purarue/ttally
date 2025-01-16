@@ -270,7 +270,7 @@ class Query(NamedTuple):
                 action_on_results=False,
             )
 
-    def run_action(self, item: list[NamedTuple] | NamedTuple) -> None:
+    def run_action(self, item: Union[list[NamedTuple], NamedTuple]) -> None:
         if self.action:
             try:
                 self.action(item)
