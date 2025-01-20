@@ -159,6 +159,8 @@ def run(
                 click.echo(d)
         case "notify":
             if topic := os.environ.get("TTALLY_NTFY_TOPIC"):
+                if not data:
+                    logging.debug("No expired items to notify")
                 import requests
 
                 url = f"https://ntfy.sh/{topic}"
