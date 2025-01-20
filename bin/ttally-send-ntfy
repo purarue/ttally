@@ -18,8 +18,10 @@ from reminder_sink.__main__ import SilentFile
 
 ext = when.CachedExtension()
 
+LOGLEVEL = os.environ.get("TTALLY_LOGLEVEL", "INFO")
+
 FORMAT = "%(asctime)s %(levelname)s - %(message)s"
-logging.basicConfig(level=logging.INFO, format=FORMAT)
+logging.basicConfig(level=getattr(logging, LOGLEVEL.upper()), format=FORMAT)
 
 
 @contextmanager
@@ -133,6 +135,8 @@ def run(
         if s.strip()
     ]
 
+    logging.debug("Collected %d items", len(data))
+
     if _filter:
         data = list(
             filter(
@@ -143,8 +147,11 @@ def run(
             )
         )
 
+        logging.debug("Filtered by %s to %d items", str(_filter), len(data))
+
     if expired or (expired is None and action == "notify"):
         data = list(filter(lambda d: d.silenced is False and d.expired is True, data))
+        logging.debug("Filtered to %d expired items", len(data))
 
     match action:
         case "print":
