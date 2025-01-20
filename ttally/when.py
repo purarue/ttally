@@ -6,13 +6,13 @@ Auxiliary code that's used in CLI scripts to query ttally in complex ways
 See bin/ttally-when for example usage
 """
 
+import sys
 import json
 import time
 from typing import (
     cast,
     Any,
     Union,
-    assert_never,
     NamedTuple,
     TypeGuard,
     Iterator,
@@ -21,6 +21,12 @@ from typing import (
     Optional,
     Literal,
 )
+
+if sys.version_info >= (3, 11):
+    from typing import assert_never  # Python 3.11+
+else:
+    from typing_extensions import assert_never  # Python < 3.11
+
 from functools import cached_property
 from datetime import datetime, timedelta
 
