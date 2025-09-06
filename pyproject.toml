@@ -1,0 +1,62 @@
+[project]
+name = "ttally"
+version = "0.1.4"
+description = "interactive module to generate code/aliases to save things I do often"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+keywords = ["data", "interactive"]
+classifiers = [
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "arrow",
+  "autotui>=0.4.6",
+  "click>=8.0",
+  "more-itertools>=8.0",
+  "tabulate",
+  "typing-extensions;python_version<'3.11'",
+]
+[[project.authors]]
+name = "purarue"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+ttally = "ttally.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/purarue/ttally"
+
+[project.optional-dependencies]
+optional = ["arrow", "orjson"]
+testing = ["flake8", "mypy"]
+
+[tool.mypy]
+pretty = "True"
+show_error_context = "True"
+show_error_codes = "True"
+check_untyped_defs = "True"
+namespace_packages = "True"
+disallow_any_generics = "True"
+disallow_subclassing_any = "True"
+disallow_untyped_calls = "True"
+disallow_untyped_defs = "True"
+disallow_incomplete_defs = "True"
+no_implicit_optional = "True"
+warn_redundant_casts = "True"
+warn_return_any = "True"
+warn_unreachable = "True"
+
+[tool.setuptools.packages.find]
+include = ["ttally"]
