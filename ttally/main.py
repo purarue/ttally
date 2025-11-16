@@ -11,7 +11,7 @@ from typing import (
     Union,
     Generator,
 )
-from datetime import timedelta
+from datetime import timedelta, datetime
 from contextlib import contextmanager
 
 import click
@@ -451,15 +451,8 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         dump_to(data, f)
 
     @call_main.command(short_help="drop the last n items")
-    @click.option(
-        "-n",
-        "--count",
-        type=int,
-        required=True,
-        help="number of items to drop",
-        default=1,
-    )
     @model_with_completion
+    @click.argument("COUNT", type=int, default=1)
     def drop_last(model: str, count: int) -> None:
         """
         Drop the last n items from the datafile
@@ -470,7 +463,6 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
             click.secho(f"Error: {f} doesn't exist. ", err=True, fg="red")
             return
 
-        import pprint
         from autotui.shortcuts import load_from, dump_to
 
         data = list(load_from(to=nt, path=f))
@@ -481,8 +473,16 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         removed = data[-count:]
         data = data[:-count]
 
-        pprint.pprint("Removing:")
-        pprint.pprint(removed)
+        click.echo("Removing:", err=True)
+        for r in removed:
+            click.echo("-" * 20)
+            for k, v in r._asdict().items():
+                v = (
+                    datetime.fromtimestamp(v.timestamp())
+                    if isinstance(v, datetime)
+                    else v
+                )
+                click.echo(f"{k}: {v}")
 
         if len(data) == 0:
             click.secho(f"Warning: No data left for {model}", err=True, fg="yellow")
