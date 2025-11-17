@@ -224,7 +224,7 @@ class Query(NamedTuple):
     filter: QueryFunc
     raw_str: str
     model_type: Type[NamedTuple]
-    action: Optional[Callable[[Union[NamedTuple, list[NamedTuple]]], None]]
+    action: Optional[Callable[[Union[NamedTuple, list[NamedTuple]]], Any]]
     action_on_results: bool = False
     write_to: TextIO = sys.stdout
 
@@ -296,8 +296,7 @@ class Query(NamedTuple):
                 ret = self.action(item)
                 # if the lambda returned a value, write it to output
                 if ret is not None:
-                    self.write_to.write(ret)
-                    self.write_to.write("\n")
+                    self.write_to.write(f"{ret}\n")
             except NameError as ne:
                 if ne.name == "results":
                     if ">>>" not in self.raw_str:
@@ -320,8 +319,7 @@ class Query(NamedTuple):
         for item in ext.glob_namedtuple(self.model_type):
             if self.filter(item):
                 if not self.action:
-                    self.write_to.write(item)
-                    self.write_to.write("\n")
+                    self.write_to.write(f"{item}\n")
                 else:
                     if self.action_on_results:
                         items.append(item)
