@@ -629,6 +629,8 @@ class Extension:
             raise CacheError("Cache is Stale")
         cf = self.cache_file(model)
         if not cf.exists():
+            if model not in self.MODELS:
+                raise NameError(f"No model named {model}")
             raise CacheError("Cache file does not exist")
         return cf.read_text()
 
