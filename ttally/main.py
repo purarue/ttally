@@ -17,7 +17,7 @@ from contextlib import contextmanager
 import click
 import autotui.exceptions
 
-from .core import Extension
+from .core import Extension, CacheError
 
 
 @contextmanager
@@ -235,7 +235,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
             res = [
                 deserialize_namedtuple(o, to=extension.MODELS[model]) for o in res_items
             ]
-        except RuntimeError:
+        except CacheError:
             pass
 
         attrs = [a.strip() for a in remove_attrs.split(",") if a.strip()]
@@ -266,7 +266,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         itr: Optional[Iterable[Any]] = None
         try:
             itr = extension.read_cache_json(model=model)
-        except RuntimeError:
+        except CacheError:
             pass
 
         # cache was stale, read from datafiles

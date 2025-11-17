@@ -42,6 +42,10 @@ def expand_path(pathish: Union[str, Path]) -> Path:
         return Path(pathish).expanduser().absolute()
 
 
+class CacheError(RuntimeError):
+    pass
+
+
 class Extension:
     def __init__(
         self,
@@ -105,7 +109,7 @@ class Extension:
         self.hash_file = str(self.cache_dir / "hash.txt")
 
         self.MODELS: Dict[str, Type[NamedTuple]] = {
-            name.casefold(): klass
+            name.lower(): klass
             for name, klass in inspect.getmembers(
                 self.config_module, self.__class__._is_model
             )
@@ -149,7 +153,7 @@ class Extension:
     @staticmethod
     def namedtuple_func_name(nt: Type[NamedTuple]) -> str:
         assert hasattr(nt, "_fields"), "Did not receive a valid NamedTuple!"
-        return str(nt.__name__.casefold())
+        return str(nt.__name__.lower())
 
     def _mk_datadir(self) -> None:
         self.data_dir.mkdir(parents=True, exist_ok=True)
@@ -177,8 +181,6 @@ class Extension:
     def glob_namedtuple(self, nt: Type[NamedTuple]) -> Iterator[NamedTuple]:
         from autotui.shortcuts import load_from
         from itertools import chain
-
-        self._mk_datadir()
 
         yield from chain(
             *map(
@@ -624,10 +626,10 @@ class Extension:
     ) -> str:
         fh = self.file_hashes(for_models={model}, models=models)
         if self.cache_is_stale(hashes=fh, for_models={model}):
-            raise RuntimeError("Cache is Stale")
+            raise CacheError("Cache is Stale")
         cf = self.cache_file(model)
         if not cf.exists():
-            raise RuntimeError("Cache file does not exist")
+            raise CacheError("Cache file does not exist")
         return cf.read_text()
 
     @classmethod

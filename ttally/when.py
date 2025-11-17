@@ -44,7 +44,15 @@ class CachedExtension(ttally.Extension):
     def glob_namedtuple(self, nt: Type[NamedTuple]) -> Iterator[NamedTuple]:
         type_name = nt.__name__
         if type_name not in self._cache:
-            self._cache[type_name] = list(super().glob_namedtuple(nt))
+            try:
+                # try to read from cache
+                res_iter = list(self.read_cache_json(model=nt.__name__.lower()))
+                from autotui.serialize import deserialize_namedtuple
+
+                res = [deserialize_namedtuple(o, to=nt) for o in res_iter]
+                self._cache[type_name] = res
+            except ttally.CacheError:
+                self._cache[type_name] = list(super().glob_namedtuple(nt))
         return more_itertools.always_iterable(self._cache[type_name])
 
 
@@ -156,7 +164,7 @@ def desc(
 
     use_name: str
     if name is None and item is not None:
-        use_name = item.__class__.__name__.casefold()
+        use_name = item.__class__.__name__.lower()
     elif callable(name):
         use_name = name(item)
     else:
@@ -270,7 +278,7 @@ class Query(NamedTuple):
             query_str, _, action_str = s.partition(">>")
             query = cls.validate_query(query_str)
             Model = _infer_model(query, ext=ext)
-            action = f"lambda {Model.__name__.casefold()}: {action_str}"
+            action = f"lambda {Model.__name__.lower()}: {action_str}"
             return Query(
                 filter=query,
                 raw_str=s,
@@ -305,7 +313,7 @@ class Query(NamedTuple):
                             err=True,
                         )
                         exit(1)
-                elif ne.name == self.model_type.__name__.casefold():
+                elif ne.name == self.model_type.__name__.lower():
                     if ">>>" in self.raw_str:
                         click.echo(
                             f"Error: For '{self.raw_str}', when using >>>, you must use the variable 'results' to refer to the list of results, Use >> to access each item individually",
