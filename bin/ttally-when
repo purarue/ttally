@@ -171,7 +171,9 @@ def display(
                         [
                             d["name"],
                             d["when"],
-                            when._color_line(d["next"], d["expired"], d.get("silenced", False)),
+                            when._color_line(
+                                d["next"], d["expired"], d.get("silenced", False)
+                            ),
                         ]
                         for d in data
                     ],
