@@ -241,6 +241,7 @@ class Query(NamedTuple):
         if s.strip() == "":
             raise ValueError("Expected query (lambda function), got empty string")
         try:
+            assert "lambda" in s
             query = eval(s)
             if cls._validate_type(query):
                 return query
