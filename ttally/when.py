@@ -10,6 +10,7 @@ import sys
 import json
 import time
 from typing import (
+    TextIO,
     cast,
     Any,
     Union,
@@ -216,6 +217,7 @@ class Query(NamedTuple):
     model_type: Type[NamedTuple]
     action: Optional[Callable[[Union[NamedTuple, list[NamedTuple]]], None]]
     action_on_results: bool = False
+    write_to: TextIO = sys.stdout
 
     @classmethod
     def validate_query(cls, s: Any) -> Callable[[NamedTuple], bool]:
@@ -279,7 +281,11 @@ class Query(NamedTuple):
     def run_action(self, item: Union[list[NamedTuple], NamedTuple]) -> None:
         if self.action:
             try:
-                self.action(item)
+                ret = self.action(item)
+                # if the lambda returned a value, write it to output
+                if ret is not None:
+                    self.write_to.write(ret)
+                    self.write_to.write("\n")
             except NameError as ne:
                 if ne.name == "results":
                     if ">>>" not in self.raw_str:
@@ -302,7 +308,8 @@ class Query(NamedTuple):
         for item in ext.glob_namedtuple(self.model_type):
             if self.filter(item):
                 if not self.action:
-                    print(item)
+                    self.write_to.write(item)
+                    self.write_to.write("\n")
                 else:
                     if self.action_on_results:
                         items.append(item)
