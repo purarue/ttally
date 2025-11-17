@@ -211,6 +211,15 @@ def descs(items: list[Optional[NamedTuple]], **kwargs: Any) -> list[str | None]:
     return [desc(item, **kwargs) for item in items]
 
 
+def _color_line(s: str, is_expired: bool, is_silenced: bool) -> str:
+    if is_expired:
+        if is_silenced:
+            return click.style(s, fg="blue")
+        else:
+            return click.style(s, fg="red")
+    return click.style(s, fg="green")
+
+
 class Query(NamedTuple):
     filter: QueryFunc
     raw_str: str
@@ -238,7 +247,9 @@ class Query(NamedTuple):
         # todo: stricter validation by inspecting signature/arg count?
 
     @classmethod
-    def from_str(cls, s: str, ext: ttally.Extension) -> "Query":
+    def from_str(
+        cls, s: str, ext: ttally.Extension, write_to: TextIO = sys.stdout
+    ) -> "Query":
 
         if ">>>" in s:
             query_str, _, action_str = s.partition(">>>")
@@ -251,6 +262,7 @@ class Query(NamedTuple):
                 raw_str=s,
                 model_type=Model,
                 action=eval(action),
+                write_to=write_to,
                 action_on_results=True,
             )
 

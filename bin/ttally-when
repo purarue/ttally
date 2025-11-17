@@ -96,15 +96,6 @@ def query(eval_str: Sequence[str], query: Sequence[str]) -> None:
 DisplayFormat = Literal["name", "table", "json"]
 
 
-def _color(s: str, is_expired: bool, is_silenced: bool) -> str:
-    if is_expired:
-        if is_silenced:
-            return click.style(s, fg="blue")
-        else:
-            return click.style(s, fg="red")
-    return click.style(s, fg="green")
-
-
 @main.command()
 @click.option("-k", "--sort-key", type=str, default="next_epoch")
 @click.option("-r", "--sort-reverse", is_flag=True, default=False, help="reverse sort")
@@ -180,7 +171,7 @@ def display(
                         [
                             d["name"],
                             d["when"],
-                            _color(d["next"], d["expired"], d.get("silenced", False)),
+                            when._color_line(d["next"], d["expired"], d.get("silenced", False)),
                         ]
                         for d in data
                     ],
