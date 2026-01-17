@@ -13,15 +13,11 @@ from typing import (
     TextIO,
     cast,
     Any,
-    Union,
     NamedTuple,
     TypeGuard,
-    Iterator,
-    Type,
-    Callable,
-    Optional,
     Literal,
 )
+from collections.abc import Iterator, Callable
 
 if sys.version_info >= (3, 11):
     from typing import assert_never  # Python 3.11+
@@ -41,7 +37,7 @@ class CachedExtension(ttally.Extension):
     def _cache(self) -> dict[str, list[NamedTuple]]:
         return {}
 
-    def glob_namedtuple(self, nt: Type[NamedTuple]) -> Iterator[NamedTuple]:
+    def glob_namedtuple(self, nt: type[NamedTuple]) -> Iterator[NamedTuple]:
         type_name = nt.__name__
         if type_name not in self._cache:
             try:
@@ -58,7 +54,7 @@ class CachedExtension(ttally.Extension):
 
 # TODO: does this actually speed anything up to cache?
 # @cache
-def _extract_dt_attr(item: Type[NamedTuple]) -> str:
+def _extract_dt_attr(item: type[NamedTuple]) -> str:
     return CachedExtension.namedtuple_extract_from_annotation(item, datetime)
 
 
@@ -72,7 +68,7 @@ def since(item: NamedTuple) -> timedelta:
     return datetime.now().astimezone() - when(item)
 
 
-def recent(results: list[NamedTuple]) -> Optional[NamedTuple]:
+def recent(results: list[NamedTuple]) -> NamedTuple | None:
     if len(results) == 0:
         return None
     return max(results, key=when)
@@ -81,7 +77,7 @@ def recent(results: list[NamedTuple]) -> Optional[NamedTuple]:
 QueryFunc = Callable[[NamedTuple], bool]
 
 
-def _infer_model(query: QueryFunc, *, ext: ttally.Extension) -> Type[NamedTuple]:
+def _infer_model(query: QueryFunc, *, ext: ttally.Extension) -> type[NamedTuple]:
     import inspect
 
     # inspect the callable name
@@ -145,12 +141,12 @@ def format_dt(dt: datetime, date_fmt: str) -> str:
 
 
 def desc(
-    item: Optional[NamedTuple] = None,
+    item: NamedTuple | None = None,
     *,
     date_fmt: str = "human",
-    name: Optional[Union[str, Callable[[Optional[NamedTuple]], str]]] = None,
+    name: str | Callable[[NamedTuple | None], str] | None = None,
     line_format: LineFormat = "human",
-    with_timedelta: Optional[timedelta] = None,
+    with_timedelta: timedelta | None = None,
 ) -> str | None:
     """
     a helper that lets me print a description of an item in a more useful way
@@ -215,7 +211,7 @@ def desc(
     return buf
 
 
-def descs(items: list[Optional[NamedTuple]], **kwargs: Any) -> list[str | None]:
+def descs(items: list[NamedTuple | None], **kwargs: Any) -> list[str | None]:
     return [desc(item, **kwargs) for item in items]
 
 
@@ -231,8 +227,8 @@ def _color_line(s: str, is_expired: bool, is_silenced: bool) -> str:
 class Query(NamedTuple):
     filter: QueryFunc
     raw_str: str
-    model_type: Type[NamedTuple]
-    action: Optional[Callable[[Union[NamedTuple, list[NamedTuple]]], Any]]
+    model_type: type[NamedTuple]
+    action: Callable[[NamedTuple | list[NamedTuple]], Any] | None
     action_on_results: bool = False
     write_to: TextIO = sys.stdout
 
@@ -299,7 +295,7 @@ class Query(NamedTuple):
                 action_on_results=False,
             )
 
-    def run_action(self, item: Union[list[NamedTuple], NamedTuple]) -> None:
+    def run_action(self, item: list[NamedTuple] | NamedTuple) -> None:
         if self.action:
             try:
                 ret = self.action(item)

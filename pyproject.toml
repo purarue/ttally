@@ -5,7 +5,7 @@ description = "interactive module to generate code/aliases to save things I do o
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["data", "interactive"]
 classifiers = [
   "Programming Language :: Python",

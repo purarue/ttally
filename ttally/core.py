@@ -9,23 +9,17 @@ from pathlib import Path
 from typing import (
     Literal,
     TypeVar,
-    Union,
-    Set,
-    Callable,
     TYPE_CHECKING,
-    Iterator,
     cast,
     Any,
     NamedTuple,
     Optional,
-    Type,
-    List,
-    Dict,
     TextIO,
 )
+from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta
 
-FileHashes = Dict[str, str]
+FileHashes = dict[str, str]
 
 
 T = TypeVar("T")
@@ -35,7 +29,7 @@ if TYPE_CHECKING:
     from click import Group
 
 
-def expand_path(pathish: Union[str, Path]) -> Path:
+def expand_path(pathish: str | Path) -> Path:
     if isinstance(pathish, Path):
         return pathish.expanduser().absolute()
     else:
@@ -54,15 +48,15 @@ class Extension:
         name: str = "ttally",
         config_module_name: str = "ttally.config",
         # data dir
-        data_dir: Optional[str] = None,
+        data_dir: str | None = None,
         data_dir_envvar: str = "TTALLY_DATA_DIR",
         data_dir_default: str = "~/.local/share/ttally",
         # config file
-        config_file: Optional[str] = None,
+        config_file: str | None = None,
         config_envvar: str = "TTALLY_CFG",
         config_default: str = "~/.config/ttally.py",
         # cache/temp dir
-        cache_dir: Optional[str] = None,
+        cache_dir: str | None = None,
         cache_dir_envvar: str = "TTALLY_CACHE_DIR",
         # extensions
         datafile_extension_envvar: str = "TTALLY_EXT",
@@ -108,7 +102,7 @@ class Extension:
 
         self.hash_file = str(self.cache_dir / "hash.txt")
 
-        self.MODELS: Dict[str, Type[NamedTuple]] = {
+        self.MODELS: dict[str, type[NamedTuple]] = {
             name.lower(): klass
             for name, klass in inspect.getmembers(
                 self.config_module, self.__class__._is_model
@@ -151,7 +145,7 @@ class Extension:
     #################
 
     @staticmethod
-    def namedtuple_func_name(nt: Type[NamedTuple]) -> str:
+    def namedtuple_func_name(nt: type[NamedTuple]) -> str:
         assert hasattr(nt, "_fields"), "Did not receive a valid NamedTuple!"
         return str(nt.__name__.lower())
 
@@ -159,7 +153,7 @@ class Extension:
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
     # load, prompt and writeback one of the models
-    def prompt(self, nt: Type[NamedTuple]) -> None:
+    def prompt(self, nt: type[NamedTuple]) -> None:
         from autotui.shortcuts import load_prompt_and_writeback
 
         self._mk_datadir()
@@ -168,7 +162,7 @@ class Extension:
         load_prompt_and_writeback(nt, f)
 
     # prompt, but set the datetime for the resulting nametuple to now
-    def prompt_now(self, nt: Type[NamedTuple]) -> None:
+    def prompt_now(self, nt: type[NamedTuple]) -> None:
         from autotui.shortcuts import load_prompt_and_writeback
 
         self._mk_datadir()
@@ -178,7 +172,7 @@ class Extension:
         load_prompt_and_writeback(nt, p, type_use_values={datetime: datetime.now})
 
     # takes one of the models.py and loads all data from it
-    def glob_namedtuple(self, nt: Type[NamedTuple]) -> Iterator[NamedTuple]:
+    def glob_namedtuple(self, nt: type[NamedTuple]) -> Iterator[NamedTuple]:
         from autotui.shortcuts import load_from
         from itertools import chain
 
@@ -191,7 +185,7 @@ class Extension:
 
     # used in __main__.py for the from_json command
     def save_from(
-        self, nt: Type[NamedTuple], use_input: TextIO, partial: bool = False
+        self, nt: type[NamedTuple], use_input: TextIO, partial: bool = False
     ) -> None:
         from autotui.namedtuple_prompt import prompt_namedtuple
         from autotui.fileio import namedtuple_sequence_loads
@@ -199,12 +193,12 @@ class Extension:
 
         json_text: str = use_input.read()
         p = self.datafile(self.namedtuple_func_name(nt))
-        items: List[NamedTuple] = load_from(nt, p, allow_empty=True)
-        new_items: List[NamedTuple] = []
+        items: list[NamedTuple] = load_from(nt, p, allow_empty=True)
+        new_items: list[NamedTuple] = []
         if partial:
             # load the list as json blobs
             os.environ["AUTOTUI_DISABLE_WARNINGS"] = "1"  # ignore null warnings
-            blobs: List[Dict[str, Any]] = []
+            blobs: list[dict[str, Any]] = []
             for b in namedtuple_sequence_loads(json_text, nt):
                 blobs.append({k: v for k, v in b._asdict().items() if v is not None})
             del os.environ["AUTOTUI_DISABLE_WARNINGS"]
@@ -313,7 +307,7 @@ class Extension:
 
     @classmethod
     def namedtuple_extract_from_annotation(
-        cls, nt: Type[NamedTuple], _type: Any
+        cls, nt: type[NamedTuple], _type: Any
     ) -> str:
         """
         >>> from typing import NamedTuple; from datetime import datetime
@@ -333,7 +327,7 @@ class Extension:
         raise TypeError(f"Could not find {_type} on {nt}")
 
     @classmethod
-    def _extract_dt_from(cls, nt: Type[NamedTuple]) -> Callable[[NamedTuple], datetime]:
+    def _extract_dt_from(cls, nt: type[NamedTuple]) -> Callable[[NamedTuple], datetime]:
         # returns a function, when which given an item of this
         # type, returns the datetime value
         dt_attr: str = cls.namedtuple_extract_from_annotation(nt, datetime)
@@ -341,9 +335,9 @@ class Extension:
 
     def glob_namedtuple_by_datetime(
         self,
-        nt: Type[NamedTuple],
+        nt: type[NamedTuple],
         reverse: bool = False,
-    ) -> List[NamedTuple]:
+    ) -> list[NamedTuple]:
         return sorted(
             self.glob_namedtuple(nt),
             key=self._extract_dt_from(nt),
@@ -352,10 +346,10 @@ class Extension:
 
     def take_items(
         self,
-        items: List[T],
-        count: Union[int, timedelta, Literal["all"]],
-        nt: Union[str, Type[NamedTuple]],
-    ) -> List[T]:
+        items: list[T],
+        count: int | timedelta | Literal["all"],
+        nt: str | type[NamedTuple],
+    ) -> list[T]:
         """
         Helper methods to take the first N items from a list, or
         the first N items from a list which are within a timedelta
@@ -381,7 +375,7 @@ class Extension:
             now = datetime.now().timestamp()
 
             def accessor(o: T) -> float:
-                data: Union[int, datetime]
+                data: int | datetime
                 if isinstance(o, dict):
                     data = o[dt_attr]
                 else:
@@ -396,8 +390,8 @@ class Extension:
             return [i for i in items if now - accessor(i) <= total]
 
     def query_recent(
-        self, nt: Type[NamedTuple], count: Union[int, timedelta, Literal["all"]]
-    ) -> List[NamedTuple]:
+        self, nt: type[NamedTuple], count: int | timedelta | Literal["all"]
+    ) -> list[NamedTuple]:
         """query the module for recent entries (based on datetime) from a namedtuple"""
 
         items_itr = self.glob_namedtuple_by_datetime(nt, reverse=True)
@@ -405,11 +399,11 @@ class Extension:
 
     def query_print(
         self,
-        nt: Type[NamedTuple],
-        count: Union[int, timedelta, Literal["all"]],
-        remove_attrs: List[str],
+        nt: type[NamedTuple],
+        count: int | timedelta | Literal["all"],
+        remove_attrs: list[str],
         output_format: Literal["json", "table"] = "table",
-        cached_data: Optional[List[NamedTuple]] = None,
+        cached_data: list[NamedTuple] | None = None,
         human_readable: bool = False,
     ) -> None:
         import more_itertools
@@ -469,7 +463,7 @@ class Extension:
                 sys.stdout.write("\n")
         else:
             # get non-datetime attr names, if they're not filtered
-            other_attrs: List[str] = [
+            other_attrs: list[str] = [
                 k
                 for k in first_item._asdict().keys()
                 if k != dt_attr and k not in remove_attrs
@@ -508,8 +502,8 @@ class Extension:
     def file_hashes(
         self,
         *,
-        models: Optional[Dict[str, Type[NamedTuple]]] = None,
-        for_models: Optional[Set[str]] = None,
+        models: dict[str, type[NamedTuple]] | None = None,
+        for_models: set[str] | None = None,
     ) -> FileHashes:
         if models is None:
             models = self.MODELS
@@ -522,7 +516,7 @@ class Extension:
         else:
             return {model: self.file_hash(model=model) for model in models}
 
-    def _read_hash(self) -> Optional[FileHashes]:
+    def _read_hash(self) -> FileHashes | None:
         """
         Plaintext file, looks like:
 
@@ -533,7 +527,7 @@ class Extension:
 
         data = {}
         try:
-            with open(self.hash_file, "r") as f:
+            with open(self.hash_file) as f:
                 for line in f:
                     ls = line.strip()
                     if not ls:
@@ -556,9 +550,9 @@ class Extension:
     def cache_is_stale(
         self,
         *,
-        hashes: Optional[FileHashes] = None,
-        for_models: Optional[Set[str]] = None,
-        models: Optional[Dict[str, Type[NamedTuple]]] = None,
+        hashes: FileHashes | None = None,
+        for_models: set[str] | None = None,
+        models: dict[str, type[NamedTuple]] | None = None,
     ) -> bool:
         cache_stale = False
         if models is None:
@@ -580,8 +574,8 @@ class Extension:
     def save_hashes(
         self,
         *,
-        hashes: Optional[FileHashes] = None,
-        models: Optional[Dict[str, Type[NamedTuple]]] = None,
+        hashes: FileHashes | None = None,
+        models: dict[str, type[NamedTuple]] | None = None,
     ) -> None:
         new_hashes = hashes or self.file_hashes(models=models)
         self._write_hash(new_hashes)
@@ -592,7 +586,7 @@ class Extension:
     def cache_sorted_exports(
         self,
         *,
-        models: Optional[Dict[str, Type[NamedTuple]]] = None,
+        models: dict[str, type[NamedTuple]] | None = None,
     ) -> bool:
         if models is None:
             models = self.MODELS
@@ -622,7 +616,7 @@ class Extension:
         self,
         *,
         model: str,
-        models: Optional[Dict[str, Type[NamedTuple]]] = None,
+        models: dict[str, type[NamedTuple]] | None = None,
     ) -> str:
         fh = self.file_hashes(for_models={model}, models=models)
         if self.cache_is_stale(hashes=fh, for_models={model}):
@@ -651,9 +645,9 @@ class Extension:
         self,
         *,
         model: str,
-        models: Optional[Dict[str, Type[NamedTuple]]] = None,
-    ) -> List[Dict[str, Any]]:
-        data: List[Dict[str, Any]] = self.__class__._load_json(
+        models: dict[str, type[NamedTuple]] | None = None,
+    ) -> list[dict[str, Any]]:
+        data: list[dict[str, Any]] = self.__class__._load_json(
             self.read_cache_str(model=model, models=models)
         )
         return data
@@ -664,11 +658,11 @@ class Extension:
     #               #
     #################
 
-    def _autocomplete_model_names(self) -> List[str]:
+    def _autocomplete_model_names(self) -> list[str]:
         # sort this, so that the order doesn't change while tabbing through
         return sorted(m for m in self.MODELS)
 
-    def _model_from_string(self, model_name: str) -> Type[NamedTuple]:
+    def _model_from_string(self, model_name: str) -> type[NamedTuple]:
         try:
             return self.MODELS[model_name]
         except KeyError:

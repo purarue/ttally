@@ -1,4 +1,5 @@
-from typing import Iterator, NamedTuple, Callable
+from typing import NamedTuple
+from collections.abc import Iterator, Callable
 
 from .core import Extension
 

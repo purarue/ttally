@@ -3,17 +3,18 @@
 import sys
 import os
 import importlib.util
-from typing import Callable, Set, Any, Optional
+from typing import Any
+from collections.abc import Callable
 
 
-LOADED: Set[str] = set()
+LOADED: set[str] = set()
 
 
 def load_config_module(
     file: str,
     module_name: str,
     test_import_func: Callable[[], None],
-    URL: Optional[str] = None,
+    URL: str | None = None,
 ) -> Any:
     if module_name in LOADED:
         return sys.modules[module_name]

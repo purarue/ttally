@@ -2,15 +2,10 @@ import sys
 import json
 from typing import (
     NamedTuple,
-    Optional,
-    List,
-    Sequence,
-    Iterable,
     Any,
     Literal,
-    Union,
-    Generator,
 )
+from collections.abc import Sequence, Iterable, Generator
 from datetime import timedelta, datetime
 from contextlib import contextmanager
 
@@ -29,7 +24,7 @@ def handle_autotui_errors() -> Generator[None, None, None]:
         sys.exit(1)
 
 
-def _parse_recent(value: Union[str, int]) -> Union[int, timedelta, Literal["all"]]:
+def _parse_recent(value: str | int) -> int | timedelta | Literal["all"]:
     if isinstance(value, int):
         return value
     if value.lower() == "all":
@@ -86,7 +81,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
 
     def _model_complete(
         ctx: click.Context, args: Sequence[str], incomplete: str
-    ) -> List[str]:
+    ) -> list[str]:
         return [
             m for m in extension._autocomplete_model_names() if m.startswith(incomplete)
         ]
@@ -109,7 +104,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         type=click.Path(exists=True),
         help="Read from file instead of STDIN",
     )
-    def from_json(model: str, partial: bool, file: Optional[str]) -> None:
+    def from_json(model: str, partial: bool, file: str | None) -> None:
         """
         A way to allow external programs to save JSON data to the current file for the model
 
@@ -126,7 +121,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
                     partial=partial,
                 )
             else:
-                with open(file, "r") as f:
+                with open(file) as f:
                     extension.save_from(
                         extension._model_from_string(model),
                         use_input=f,
@@ -211,7 +206,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
     def _recent(
         model: str,
         remove_attrs: str,
-        count: Union[int, timedelta, Literal["all"]],
+        count: int | timedelta | Literal["all"],
         output_format: Literal["json", "table"],
         human_readable: bool,
     ) -> None:
@@ -225,7 +220,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         nt = extension._model_from_string(model)
 
         # try to load cached data
-        res: Optional[List[NamedTuple]] = None
+        res: list[NamedTuple] | None = None
         try:
             from autotui.serialize import deserialize_namedtuple
 
@@ -263,7 +258,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         """
 
         # read from cache if cache isn't stale
-        itr: Optional[Iterable[Any]] = None
+        itr: Iterable[Any] | None = None
         try:
             itr = extension.read_cache_json(model=model)
         except CacheError:
@@ -302,7 +297,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         is_flag=True,
         help="Remove duplicate entries from the merged data (might occur if there are errors syncing files)",
     )
-    def merge(model: str, sort_key: Optional[str], remove_duplicates: bool) -> None:
+    def merge(model: str, sort_key: str | None, remove_duplicates: bool) -> None:
         """
         Merge all datafiles for one model into a single '-merged.json' file
         """
@@ -312,7 +307,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         from autotui.fileio import namedtuple_sequence_dumps
         from more_itertools import unique_everseen
 
-        datafiles: List[Path] = list(extension.glob_datafiles(model))
+        datafiles: list[Path] = list(extension.glob_datafiles(model))
         if len(datafiles) == 0:
             click.echo(f"No datafiles for model {model}", err=True)
             return
