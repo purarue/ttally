@@ -69,7 +69,6 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         same as above, but if the model has a datetime, set it to now,
         query the 10 most recent items for a model
         """
-        pass
 
     @call_main.command(short_help="generate shell aliases")
     def generate() -> None:
