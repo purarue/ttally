@@ -9,9 +9,6 @@ os.environ["TTALLY_SKIP_DEFAULT_IMPORT"] = "1"
 
 import ttally.core
 
-# setup
-ttally.core.Extension().import_config()
-
 ext = ttally.core.Extension(data_dir=this_dir)
 
 
