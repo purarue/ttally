@@ -156,7 +156,7 @@ def run(
     match action:
         case "print":
             for d in data:
-                click.echo(d)
+                click.echo(f"collected: {d}")
         case "notify":
             if topic := os.environ.get("TTALLY_NTFY_TOPIC"):
                 if not data:
