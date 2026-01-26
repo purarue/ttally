@@ -8,6 +8,7 @@ os.environ["TTALLY_CFG"] = config_file
 os.environ["TTALLY_SKIP_DEFAULT_IMPORT"] = "1"
 
 import ttally.core
+import ttally.when  # noqa
 
 ext = ttally.core.Extension(data_dir=this_dir)
 
