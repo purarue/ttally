@@ -156,10 +156,10 @@ def format_dt(dt: datetime, date_fmt: str) -> str:
 
 
 def desc(
-    item: NamedTuple | None = None,
+    item: Optional[NamedTuple] = None,
     *,
     date_fmt: str = "human",
-    name: str | Callable[[NamedTuple | None], str] | None = None,
+    name: str | Callable[[Optional[NamedTuple]], str] | None = None,
     line_format: LineFormat = "human",
     with_timedelta: timedelta | None = None,
 ) -> str | None:
@@ -228,7 +228,7 @@ def desc(
     return buf
 
 
-def descs(items: list[NamedTuple | None], **kwargs: Any) -> list[str | None]:
+def descs(items: list[Optional[NamedTuple]], **kwargs: Any) -> list[str | None]:
     return [desc(item, **kwargs) for item in items]
 
 
