@@ -12,6 +12,8 @@ import json
 import time
 import logging
 from typing import (
+    Union,
+    Optional,
     TextIO,
     cast,
     Any,
@@ -82,7 +84,7 @@ def since(item: NamedTuple) -> timedelta:
     return datetime.now().astimezone() - when(item)
 
 
-def recent(results: list[NamedTuple]) -> NamedTuple | None:
+def recent(results: list[NamedTuple]) -> Optional[NamedTuple]:
     if len(results) == 0:
         return None
     return max(results, key=when)
@@ -155,10 +157,10 @@ def format_dt(dt: datetime, date_fmt: str) -> str:
 
 
 def desc(
-    item: NamedTuple | None = None,
+    item: Optional[NamedTuple] = None,
     *,
     date_fmt: str = "human",
-    name: str | Callable[[NamedTuple | None], str] | None = None,
+    name: str | Callable[[Optional[NamedTuple]], str] | None = None,
     line_format: LineFormat = "human",
     with_timedelta: timedelta | None = None,
 ) -> str | None:
@@ -227,7 +229,7 @@ def desc(
     return buf
 
 
-def descs(items: list[NamedTuple | None], **kwargs: Any) -> list[str | None]:
+def descs(items: list[Optional[NamedTuple]], **kwargs: Any) -> list[str | None]:
     return [desc(item, **kwargs) for item in items]
 
 
@@ -244,7 +246,7 @@ class Query(NamedTuple):
     filter: QueryFunc
     raw_str: str
     model_type: type[NamedTuple]
-    action: Callable[[NamedTuple | list[NamedTuple]], Any] | None
+    action: Callable[[Union[list[NamedTuple], NamedTuple]], Any] | None
     action_on_results: bool = False
     write_to: TextIO = sys.stdout
 
@@ -311,7 +313,7 @@ class Query(NamedTuple):
                 action_on_results=False,
             )
 
-    def run_action(self, item: list[NamedTuple] | NamedTuple) -> None:
+    def run_action(self, item: Union[list[NamedTuple], NamedTuple]) -> None:
         if self.action:
             try:
                 ret = self.action(item)
