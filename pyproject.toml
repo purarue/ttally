@@ -40,7 +40,7 @@ Homepage = "https://github.com/purarue/ttally"
 
 [project.optional-dependencies]
 optional = ["arrow", "orjson"]
-testing = ["flake8", "mypy"]
+testing = ["flake8", "mypy", "pytest"]
 
 [tool.mypy]
 pretty = true
@@ -60,3 +60,7 @@ warn_unreachable = true
 
 [tool.setuptools.packages.find]
 include = ["ttally"]
+
+[tool.pytest.ini_options]
+addopts = "-vv ./tests/"
+
