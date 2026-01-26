@@ -245,7 +245,7 @@ class Query(NamedTuple):
     filter: QueryFunc
     raw_str: str
     model_type: type[NamedTuple]
-    action: Callable[[list[NamedTuple | NamedTuple]], Any] | None
+    action: Callable[[list[NamedTuple] | NamedTuple], Any] | None
     action_on_results: bool = False
     write_to: TextIO = sys.stdout
 
