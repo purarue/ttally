@@ -6,9 +6,11 @@ Auxiliary code that's used in CLI scripts to query ttally in complex ways
 See bin/ttally-when for example usage
 """
 
+import os
 import sys
 import json
 import time
+import logging
 from typing import (
     TextIO,
     cast,
@@ -23,6 +25,12 @@ if sys.version_info >= (3, 11):
     from typing import assert_never  # Python 3.11+
 else:
     from typing_extensions import assert_never  # Python < 3.11
+
+
+LOGLEVEL = os.environ.get("TTALLY_LOGLEVEL", "INFO")
+
+FORMAT = "%(asctime)s %(levelname)s - %(message)s"
+logging.basicConfig(level=getattr(logging, LOGLEVEL.upper()), format=FORMAT)
 
 from functools import cached_property
 from datetime import datetime, timedelta
@@ -41,14 +49,20 @@ class CachedExtension(ttally.Extension):
         type_name = nt.__name__
         if type_name not in self._cache:
             try:
+                logging.debug(f"Trying to read {type_name} from cache...")
                 # try to read from cache
                 res_iter = list(self.read_cache_json(model=nt.__name__.lower()))
                 from autotui.serialize import deserialize_namedtuple
 
                 res = [deserialize_namedtuple(o, to=nt) for o in res_iter]
+                logging.debug(f"Saving {len(res)} {type_name} items to cache")
                 self._cache[type_name] = res
             except ttally.CacheError:
+                logging.debug(
+                    f"{type_name} Failed with cache error, loading through json/yaml interface"
+                )
                 self._cache[type_name] = list(super().glob_namedtuple(nt))
+                logging.debug(f"Loaded {len(self._cache[type_name])} {type_name} items")
         return more_itertools.always_iterable(self._cache[type_name])
 
 
@@ -157,6 +171,8 @@ def desc(
 
     this lets me see the last time I did something, and when I should do it next
     """
+
+    logging.debug(f"Printing {item} with {line_format=} {with_timedelta=}")
 
     use_name: str
     if name is None and item is not None:
@@ -321,8 +337,10 @@ class Query(NamedTuple):
 
     def run(self, ext: ttally.Extension) -> None:
         items = []
+        passed_filter, did_not_pass_filter = 0, 0
         for item in ext.glob_namedtuple(self.model_type):
             if self.filter(item):
+                passed_filter += 1
                 if not self.action:
                     self.write_to.write(f"{item}\n")
                 else:
@@ -330,6 +348,15 @@ class Query(NamedTuple):
                         items.append(item)
                     else:
                         self.run_action(item)
+            else:
+                did_not_pass_filter += 1
+
+        logging.debug(
+            f"{self.raw_str}: {passed_filter} items passed filter, {did_not_pass_filter} didn't"
+        )
 
         if self.action_on_results and self.action:
+            logging.debug(
+                f"{self.raw_str} {self.model_type} running action_on_results with {len(items)}"
+            )
             self.run_action(items)
