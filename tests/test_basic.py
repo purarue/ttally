@@ -8,7 +8,6 @@ os.environ["TTALLY_CFG"] = config_file
 os.environ["TTALLY_SKIP_DEFAULT_IMPORT"] = "1"
 
 import ttally.core
-import ttally.when  # noqa
 
 ext = ttally.core.Extension(data_dir=this_dir)
 
@@ -16,6 +15,10 @@ ext = ttally.core.Extension(data_dir=this_dir)
 def test_config() -> None:
     assert len(ext.MODELS) == 1
     assert list(ext.MODELS.keys()) == ["self"]
+
+
+def test_ttally_when_import() -> None:
+    import ttally.when  # noqa
 
 
 def test_load_yaml() -> None:

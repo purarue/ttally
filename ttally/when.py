@@ -12,6 +12,7 @@ import json
 import time
 import logging
 from typing import (
+    Union,
     Optional,
     TextIO,
     cast,
@@ -245,7 +246,7 @@ class Query(NamedTuple):
     filter: QueryFunc
     raw_str: str
     model_type: type[NamedTuple]
-    action: Callable[[list[NamedTuple] | NamedTuple], Any] | None
+    action: Callable[[Union[list[NamedTuple], NamedTuple]], Any] | None
     action_on_results: bool = False
     write_to: TextIO = sys.stdout
 
@@ -312,7 +313,7 @@ class Query(NamedTuple):
                 action_on_results=False,
             )
 
-    def run_action(self, item: list[NamedTuple] | NamedTuple) -> None:
+    def run_action(self, item: Union[list[NamedTuple], NamedTuple]) -> None:
         if self.action:
             try:
                 ret = self.action(item)

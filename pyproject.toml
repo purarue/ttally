@@ -63,4 +63,3 @@ include = ["ttally"]
 
 [tool.pytest.ini_options]
 addopts = "-vv ./tests/"
-
