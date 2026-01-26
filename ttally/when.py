@@ -12,6 +12,7 @@ import json
 import time
 import logging
 from typing import (
+    Optional,
     TextIO,
     cast,
     Any,
@@ -82,7 +83,7 @@ def since(item: NamedTuple) -> timedelta:
     return datetime.now().astimezone() - when(item)
 
 
-def recent(results: list[NamedTuple]) -> NamedTuple | None:
+def recent(results: list[NamedTuple]) -> Optional[NamedTuple]:
     if len(results) == 0:
         return None
     return max(results, key=when)
