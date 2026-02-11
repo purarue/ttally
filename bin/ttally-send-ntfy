@@ -24,21 +24,6 @@ FORMAT = "%(asctime)s %(levelname)s - %(message)s"
 logging.basicConfig(level=getattr(logging, LOGLEVEL.upper()), format=FORMAT)
 
 
-@contextmanager
-def capture_stdout(buf: TextIO) -> Generator[None, None, None]:
-    actual_stdout = sys.stdout
-    try:
-        sys.stdout = buf
-        yield
-    finally:
-        sys.stdout = actual_stdout
-
-
-@click.group()
-def main() -> None:
-    pass
-
-
 @dataclass
 class QueryOutput:
     name: str
@@ -48,38 +33,27 @@ class QueryOutput:
     next_at: datetime
 
     @classmethod
-    def from_dict(cls, d: Any, /, *, silenced: list[str]) -> "QueryOutput":
+    def from_dict(cls, d: Any) -> "QueryOutput":
         assert isinstance(d, dict)
+        assert "name" in d
+        assert "expired" in d
+        assert "silenced" in d
         return cls(
             name=d["name"],
             last_at=datetime.fromtimestamp(d["epoch"], tz=timezone.utc),
             next_at=datetime.fromtimestamp(d["next_epoch"], tz=timezone.utc),
             expired=d["expired"],
-            silenced=SilentFile.is_silenced(d["name"], silenced=silenced),
+            silenced=d["silenced"],
         )
 
     @classmethod
-    def from_str(cls, s: Any, /, *, silenced: list[str]) -> "QueryOutput":
-        return cls.from_dict(json.loads(s), silenced=silenced)
+    def from_str(cls, s: str) -> "QueryOutput":
+        return cls.from_dict(json.loads(s))
 
 
-REMINDER_SINK_FILE_NAME: str = "reminder-sink-silent.txt"
-
-
-def _reminder_sink_file() -> Path:
-    if file := os.environ.get("REMINDER_SINK_SILENT_FILE"):
-        return Path(file)
-    if "HPIDATA" in os.environ:
-        return Path(os.environ["HPIDATA"]) / REMINDER_SINK_FILE_NAME
-    else:
-        raise FileNotFoundError()
-
-
-def _reminder_sink_silent_contents() -> list[str]:
-    try:
-        return list(SilentFile(_reminder_sink_file()).load())
-    except FileNotFoundError:
-        return []
+@click.group()
+def main() -> None:
+    pass
 
 
 Action = Literal["print", "notify"]
@@ -93,63 +67,16 @@ def _parse_filter(val: str) -> list[str]:
 
 @main.command()
 @click.option("-a", "--action", default="print", type=click.Choice(get_args(Action)))
-@click.option(
-    "--expired/--all",
-    is_flag=True,
-    default=None,
-    help="Only print items which have expired",
-)
-@click.option(
-    "--filter",
-    "_filter",
-    required=False,
-    type=click.UNPROCESSED,
-    callback=lambda ctx, arg, value: _parse_filter(value),
-)
-@click.argument("QUERY", type=str, nargs=-1)
-def run(
-    action: Action, expired: bool | None, _filter: str, query: Sequence[str]
-) -> None:
-    if "-" in query:
-        query = sys.stdin.readlines()
-
-    # HACK:only include items which have 'with_timedelta',
-    # so that we know that next and next_epoch are always present
-    # we'd only want to warn for these items anyways
-    parsed_queries = [
-        when.Query.from_str(q, ext=ext) for q in query if "with_timedelta" in q
-    ]
-    if not parsed_queries:
-        click.echo("No queries provided", err=True)
-        return
-    buf = io.StringIO()
-    with capture_stdout(buf):
-        for q in parsed_queries:
-            q.run(ext=ext)
-
-    silenced: list[str] = _reminder_sink_silent_contents()
-
+def run(action: Action) -> None:
     data: list[QueryOutput] = [
-        QueryOutput.from_str(s, silenced=silenced)
-        for s in buf.getvalue().splitlines()
+        QueryOutput.from_str(s)
+        for s in click.get_text_stream("stdin").read().splitlines()
         if s.strip()
     ]
 
     logging.debug("Collected %d items", len(data))
 
-    if _filter:
-        data = list(
-            filter(
-                lambda d: any(
-                    fnmatch.fnmatch(d.name, filter_query) for filter_query in _filter
-                ),
-                data,
-            )
-        )
-
-        logging.debug("Filtered by %s to %d items", str(_filter), len(data))
-
-    if expired or (expired is None and action == "notify"):
+    if action == "notify":
         data = list(filter(lambda d: d.silenced is False and d.expired is True, data))
         logging.debug("Filtered to %d expired items", len(data))
 
