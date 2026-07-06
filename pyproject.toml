@@ -39,7 +39,7 @@ ttally = "ttally.__main__:main"
 Homepage = "https://github.com/purarue/ttally"
 
 [project.optional-dependencies]
-optional = ["arrow", "orjson"]
+optional = ["orjson"]
 testing = ["flake8", "mypy", "pytest"]
 
 [tool.mypy]
