@@ -309,7 +309,7 @@ def wrap_accessor(*, extension: Extension) -> click.Group:
         datafiles: list[Path] = list(extension.glob_datafiles(model))
         if len(datafiles) == 0:
             click.echo(f"No datafiles for model {model}", err=True)
-            return
+            sys.exit(1)
 
         data = json.loads(
             namedtuple_sequence_dumps(
